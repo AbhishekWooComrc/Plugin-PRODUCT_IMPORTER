@@ -88,7 +88,6 @@
 			var sku = $(this).data('sku');
 			var item_id = $(this).data('id');
 			var json_file_name = $('#json_file_name').val();
-			// alert(json_file_name);
 			var action = 'ced_ajax_action_for_product_import';
 			var element = this;
 			$.ajax({
@@ -103,10 +102,13 @@
 				success : function(response) {
 					if (response == '1') {
 						$(element).prop('disabled', true);
-						alert('Imported');
+						$(element).prop("value", "Already Imported");
+						$(element).css( "background-color", "green");
+						$(element).css( "color", "white");
 					} else {
 						alert('Product Not imported Successfully !! Concern');
 					}
+					console.log(response);
 				}
 			});
 		});

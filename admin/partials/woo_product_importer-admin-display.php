@@ -49,7 +49,7 @@ if(isset($_FILES['json_file'])){
             $data[0] = array("file_name" => $file_name);
         }
         update_option('importer_json_file',$data);     
-        echo '<div style="background-color:green; color:white;padding:10px;">Successfully Insrted</div>';
+        echo '<div style="background-color:green; color:white;padding:10px;">Successfully Inserted</div>';
 
     }
     }else{

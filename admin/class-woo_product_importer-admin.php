@@ -175,34 +175,60 @@ error_reporting(E_ALL);
 			$json_file_content = json_decode(file_get_contents($upload_dir.'Woo_product_importer'.$file_name),1);
 			foreach($json_file_content as $file_key => $file_value) {
 				if ($item_id == $file_value['item']['item_id']) {
-					// print_r($file_value);
 					$title = $file_value['item']['name'];
 					$content = $file_value['item']['description'];
 					$variation_type = $file_value['item']['has_variation'];
 					$prod_type;
-					if(1 == $variation_type) {
-						$prod_type = 'product_variation';
-					} else {
-						$prod_type = 'product';
-					}
 
-					$post_id = wp_insert_post(array (
-						'post_type' => $prod_type,
-						'post_title' => $title,
-						'post_content' => $content,
-						'post_status' => 'publish',
-						'comment_status' => 'closed',   // if you prefer
-						'ping_status' => 'closed',      // if you prefer
-					 ));
-					if($post_id); {
-						echo "1";
-					}
-					// calling of function 'ced_product_importer_update_post_meta()' for store the meta_data about this specific post(product)
-					$this->ced_product_importer_update_post_meta($post_id, $file_value['item']);
-					// calling of function 'ced_product_importer_save_image()' for store the images(featured_images/gallery) about this specifinc post(product)
-					$this->ced_product_importer_save_image($post_id, $file_value['item']);
-					$this->ced_product_import_attributes($post_id, $file_value['item']);
-				}	
+					if(1 == $variation_type) {
+					// -------------------------------------
+					//  if PRODUCT is variable product
+					// ----------------------------------------
+						$variable_pro_post_id = wp_insert_post(array (
+							'post_type' => 'product',
+							'post_title' => $title,
+							'post_content' => $content,
+							'post_status' => 'publish',
+							'comment_status' => 'closed',   // if you prefer
+							'ping_status' => 'closed', // if you prefer
+						 ));
+						if($variable_pro_post_id); {
+							echo "1";
+						}
+
+
+						wp_set_object_terms($variable_pro_post_id, 'variable', 'product_type');
+
+						$this->ced_product_importer_update_post_meta($variable_pro_post_id, $file_value['item']);
+						$this->ced_product_importer_attributes_for_variable($variable_pro_post_id, $file_value['tier_variation']);
+						// $this->ced_product_importer_save_image($variable_pro_post_id, $file_value['item']);
+						$this->ced_product_importer_variation_product_insertion($variable_pro_post_id, $file_value['item']['variations'], $file_value['tier_variation']);
+					} else {
+						// ----------------------------------------
+						// 	If Product is simple product
+						// ---------------------------------------
+
+						$prod_type = 'product';
+						$post_id = wp_insert_post(array (
+							'post_type' => $prod_type,
+							'post_title' => $title,
+							'post_content' => $content,
+							'post_status' => 'publish',
+							'comment_status' => 'closed',   // if you prefer
+							'ping_status' => 'closed',      // if you prefer
+						));
+						if($post_id); {
+							echo "1";
+						}
+						wp_set_object_terms($post_id, 'simple', 'product_type');
+						// calling of function 'ced_product_importer_update_post_meta()' for store the meta_data about this specific post(product)
+						$this->ced_product_importer_update_post_meta($post_id, $file_value['item']);
+						// calling of function 'ced_product_importer_save_image()' for store the images(featured_images/gallery) about this specifinc post(product)
+						$this->ced_product_importer_save_image($post_id, $file_value['item']);
+						// calling of function 'ced_product_import_attributes()' for store the attributes
+						$this->ced_product_import_attributes($post_id, $file_value['item']);
+					}	
+				}
 			}
 		}
 		
@@ -319,4 +345,88 @@ error_reporting(E_ALL);
 
 	}
 
+	
+	
+	/**
+	 * Ced_product_importer_attributes_for_variable
+	 * Description : create attributes for specific products (Variable Product Attributes)
+	 * 
+	 * @since 1.0.0
+	 * @param  mixed $post_id
+	 * @param  mixed $data
+	 * @return void
+	 */
+	public function ced_product_importer_attributes_for_variable($post_id, $data) {
+
+		foreach($data  as $attr_key) {
+			$name = $attr_key['name'];
+			$value = $attr_key['options'];
+			$imploded_value = implode("|",$value);
+			$attributedata[$name] = Array(
+					  'name'=>$name, 
+					  'value'=>$imploded_value,
+					  'is_variation' => '1',
+					  'is_visible' => '1',
+					  'is_taxonomy' => '0'	
+		   );
+			  
+		}
+		update_post_meta( $post_id,'_product_attributes',$attributedata );
+
+	}
+
+	public function ced_product_importer_variation_product_insertion($post_id, $data, $tier_variation_data) {
+
+		foreach ($data as $vari_key => $vari_val) {
+			$title =  $vari_val['name'];
+			$variable_variation_post_id = wp_insert_post(array (
+				'post_type' => 'product_variation',
+				'post_title' => $title,
+				'post_content' => '',
+				'post_status' => 'publish',
+				'comment_status' => 'closed',   // if you prefer
+				'ping_status' => 'closed', // if you prefer
+				'post_parent' => $post_id
+			 ));	
+			$this->ced_product_importer_update_postmeta_for_variable($variable_variation_post_id, $vari_val, $tier_variation_data);		
+		}
+
+	}
+
+	public function ced_product_importer_update_postmeta_for_variable($post_id, $key_varible, $tier_variation_data) {
+		$price = "";
+			if(!isset($data['sale_price'])) {
+				$price = $key_varible['price'];
+			} else {
+				$price = $key_varible['sale_price'];
+			}
+			$variation_attr_name =  $key_varible['name'];
+			update_post_meta($post_id, '_price',$price );
+			update_post_meta($post_id, '_regular_price',$key_varible['price'] );
+			update_post_meta($post_id, '_sale_price',$price );
+			update_post_meta($post_id, '_sku',$key_varible['variation_sku'] );
+			update_post_meta($post_id, '_stock',$key_varible['stock'] );
+			update_post_meta($post_id, '_downloadable','no' );
+			update_post_meta($post_id, '_virtual','no' );
+			update_post_meta($post_id, '_sold_individually','no' );
+			update_post_meta($post_id, '_backorders','no' );	
+			$check = false;
+			$attribute_name = "";
+			$option_val = "";
+			foreach($tier_variation_data as $key=>$value) {
+				$options = ($value['options']);
+				$attribute_name =($value['name']) ;
+				foreach($options as $option_key => $option_val) {
+					if($variation_attr_name == $option_val) {
+						$option_val = $variation_attr_name;
+						$check = true;
+						break;
+					}
+				}
+			}
+			update_post_meta($post_id, 'attribute_' . strtolower($attribute_name), $option_val);		
+
+		
+	}
 }
+
