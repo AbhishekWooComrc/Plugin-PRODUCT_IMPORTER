@@ -112,6 +112,49 @@
 				}
 			});
 		});
+		
+		// ajax for bulk data insertion
+		if($('#upload_json').length) {
+			$(document).on('click', '#doaction', function(e){
+				e.preventDefault();
+				var element = this;
+				var bulk_action = $('#bulk-action-selector-top').val();
+				if (bulk_action != 'bulk_insert') {
+					alert('PLEASE SELECT BULK ATCION BEFORE APPLYING');
+				} else {
+					var json_file_name = $('#json_file_name').val();
+					var action = 'ced_ajax_action_for_product_bulk_import';
+					var item_id_array = new Array();
+					$("input:checked").each(function() {
+					item_id_array.push($(this).val());
+					});
+					$.ajax({
+						url : ced_ajax_object.ajaxurl,
+						type : 'post',
+						data : {
+							item : item_id_array,
+							file_name : json_file_name,
+							action : action
+						},
+						success : function(response) {
+							// if (response == '1') {
+								$(element).prop('disabled', true);
+								// $(element).prop("value", "Already Imported");
+								$(element).css( "background-color", "green");
+								$(element).css( "color", "white");
+							// // } else {
+							// 	alert('Product Not imported Successfully !! Concern');
+							// }
+							console.log(response);
+							// alert(response);
+						}
+					});
+					
+					
+				}
+				
+			})
+		}
 	});
 
 })( jQuery );

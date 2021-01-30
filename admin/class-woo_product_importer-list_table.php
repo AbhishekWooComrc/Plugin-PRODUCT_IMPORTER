@@ -27,8 +27,10 @@ class My_List_Table extends WP_List_Table {
       $html="<input type='button' value = 'Already Imported' id = 'import_product' disabled>";
       } else {
       $html="<input type='button' value = 'import' id = 'import_product' class = 'import_product' data-sku='" . $item['item']['item_sku'] . "', data-id = '" . $item['item']['item_id'] . "'>";
-
-      }
+      // <img src='/opt/lampp/htdocs/WooCommerce/wp-content/plugins/woo_product_importer/admin/ezgif-2-6d0b072c3d3f.gif'>";
+      // // echo WOO_PRODUCT_IMPORTER_PLUGIN_URL.'assets/img/ezgif-2-6d0b072c3d3f.gif' ; 
+      // echo WOO_PRODUCT_IMPORTER_PLUGIN_URL."assets/img/ezgif-2-6d0b072c3d3f.gif";
+    }
 
 
         switch( $column_name ) { 
@@ -57,16 +59,24 @@ class My_List_Table extends WP_List_Table {
     
     function get_bulk_actions() {
         $actions = array(
-            'delete'    => 'Delete'
+            'bulk_insert'    => 'Bulk_Insert'
         );
         return $actions;
     }
 
 
     function column_cb($item) {
-    return sprintf(
-        '<input type="checkbox" name="book[]" value="%s" />', $item['item']['name']
-    );    
+      $id = $item['item']['item_sku'];
+      global $wpdb;
+      $product_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key='_sku' AND meta_value='%s' LIMIT 1", $id ) );
+      if ( $product_id ){
+        return sprintf(
+          '<input type="checkbox" name="book[]"  disabled />'
+      );       } else {
+        return sprintf(
+          '<input type="checkbox" name="book[]" value="%s" />', $item['item']['item_id']
+      ); 
+    }
     }
     function prepare_items() {
         $columns = $this->get_columns();

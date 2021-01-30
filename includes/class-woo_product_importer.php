@@ -159,6 +159,9 @@ class Woo_product_importer {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'ced_create_import_file_menu_page' );
 		$this->loader->add_action( 'wp_ajax_ced_ajax_for_json_file_name', $plugin_admin, 'ced_json_file_show_data_content' );
 		$this->loader->add_action( 'wp_ajax_ced_ajax_action_for_product_import', $plugin_admin, 'ced_product_importer_manuall' );	
+		$this->loader->add_action( 'wp_ajax_ced_ajax_action_for_product_bulk_import', $plugin_admin, 'ced_product_bulk_importer_manuall' );	
+
+		
 	}
 
 	/**

@@ -26,13 +26,7 @@ if(isset($_FILES['json_file'])){
     if(in_array($file_ext,$extensions)=== false){
        $errors[]="extension not allowed, please choose a JSON file.";
     }
-    
-   
-    
-    // if($file_size > 2097152) {
-    //    $errors[]='File size must be excately 2 MB';
-    // }
-    
+        
     if(empty($errors)==true) {
         $upload = wp_upload_dir();
         $upload_dir = $upload['basedir'];
@@ -76,7 +70,6 @@ if(isset($_FILES['json_file'])){
         }
         ?>
         <hr>
-
         <h3>The all Uploaded File are mentioned in these dropdown </h3>  <br>
         <div style="float:left;">
             <select name="json_file_name" id="json_file_name">  
